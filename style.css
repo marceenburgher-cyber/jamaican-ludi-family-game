@@ -1337,15 +1337,36 @@ body {
   #themeToggleBtn > span:last-child { display:none; }
   .board-frame { padding:0 41px 38px; }
   .region-label.home-label.rlR,
-  .region-label.home-label.rlG,
-  .region-label.home-label.rlY,
-  .region-label.home-label.rlB {
+  .region-label.home-label.rlY {
     width:47px;
     max-width:47px;
     padding:4px 3px;
   }
+  .region-label.home-label.rlG,
+  .region-label.home-label.rlB {
+    width:96px;
+    max-width:96px;
+    min-height:44px;
+  }
+  .region-label.home-label.rlG { padding:5px 8px 18px; }
+  .region-label.home-label.rlB { padding:18px 8px 5px; }
   .region-label.home-label .territory-copy { width:100%; min-width:0; }
   .region-label.home-label .territory-copy strong { overflow-wrap:anywhere; }
+  .region-label.home-label.rlG .territory-copy small,
+  .region-label.home-label.rlB .territory-copy small { font-size:5px; }
+  .region-label.home-label.rlG .territory-copy strong,
+  .region-label.home-label.rlB .territory-copy strong { font-size:8px; }
+  .region-label.yard-label {
+    width:32%;
+    min-height:42px;
+    gap:5px;
+    padding:4px 6px;
+  }
+  .region-label.yard-label .territory-crest { width:20px; height:20px; }
+  .region-label.yard-label .territory-copy { gap:0; }
+  .region-label.yard-label .territory-copy small { font-size:5px; }
+  .region-label.yard-label .territory-copy strong { font-size:8px; }
+  .region-label.yard-label .territory-copy em { display:block; font-size:5px; }
   .board-key { margin-top:42px; }
   .panel { width:100%; }
 }
@@ -1353,7 +1374,8 @@ body {
 @media (max-width:380px) {
   .board-frame { padding-inline:41px; }
   .region-label.home-label.rlR,
+  .region-label.home-label.rlY { width:45px; max-width:45px; }
   .region-label.home-label.rlG,
-  .region-label.home-label.rlY,
-  .region-label.home-label.rlB { width:45px; max-width:45px; }
+  .region-label.home-label.rlB { width:88px; max-width:88px; }
+  .region-label.yard-label { width:34%; padding-inline:5px; }
 }
