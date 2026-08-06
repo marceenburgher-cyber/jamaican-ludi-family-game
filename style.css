@@ -1336,7 +1336,10 @@ body {
   #themeToggleBtn::after { content:none; }
   #themeToggleBtn > span:last-child { display:none; }
   .board-frame { padding:0 41px 38px; }
-  .region-label.home-label {
+  .region-label.home-label.rlR,
+  .region-label.home-label.rlG,
+  .region-label.home-label.rlY,
+  .region-label.home-label.rlB {
     width:47px;
     max-width:47px;
     padding:4px 3px;
@@ -1349,5 +1352,8 @@ body {
 
 @media (max-width:380px) {
   .board-frame { padding-inline:41px; }
-  .region-label.home-label { width:45px; max-width:45px; }
+  .region-label.home-label.rlR,
+  .region-label.home-label.rlG,
+  .region-label.home-label.rlY,
+  .region-label.home-label.rlB { width:45px; max-width:45px; }
 }
