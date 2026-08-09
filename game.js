@@ -414,7 +414,7 @@ function checkGameOver() {
 // ============================================================
 
 async function performRoll() {
-  const color = currentColor();
+  function finishTurnSequence(wasDouble) {
   state.animating = true;
   render();
 
@@ -471,7 +471,7 @@ async function handleNoLegalRoll(color) {
 
 async function rollDice() {
   if (state.gameOver || state.animating || state.controllers[currentColor()] !== "human") return;
-  const color = currentColor();
+  function finishTurnSequence(wasDouble) {
   if (state.players[color].finished === 4) { advanceTurn(); return; }
   const { anyLegal } = await performRoll();
   if (!anyLegal) handleNoLegalRoll(color);
@@ -500,7 +500,7 @@ async function pieceClicked(color, pieceIdx) {
 
 function finishTurnSequence(wasDouble) {
   if (state.gameOver) return;
-  const color = currentColor();
+  function finishTurnSequence(wasDouble) {
   if (wasDouble && state.doublesStreak < 2) {
     state.doublesStreak++;
     state.rolled = false;
@@ -574,7 +574,7 @@ async function aiTakeTurn() {
   state.aiRunning = true;
   try {
     while (!state.gameOver && state.controllers[currentColor()] === "ai") {
-      const color = currentColor();
+      function finishTurnSequence(wasDouble) {
       if (state.players[color].finished === 4) { advanceTurn(); continue; }
       await wait(550);
       const { anyLegal } = await performRoll();
@@ -866,7 +866,7 @@ function cellCoordFor(color, piece, slotIdx) {
 }
 
 function positionPiecesOnly() {
-  const color = currentColor();
+  function finishTurnSequence(wasDouble) {
   const legal =
     state.rolled && !state.animating && state.controllers[color] === "human"
       ? legalDiceForColor(color)
@@ -987,7 +987,7 @@ function render() {
 }
 
 function renderSidebar(legal) {
-  const color = currentColor();
+  function finishTurnSequence(wasDouble) {
   const isHuman = state.controllers[color] === "human";
   document.getElementById("turnSwatch").style.background = cssColor(color);
   document.getElementById("turnIndicator").style.setProperty("--glow", cssColor(color));
@@ -1113,7 +1113,7 @@ function updatePlayersPanel() {
 // Cheap refresh for text that references the current player's name, without
 // touching pieces/board — used while typing so we don't fight the input focus.
 function renderSidebarTextOnly() {
-  const color = currentColor();
+  function finishTurnSequence(wasDouble) {
   const isHuman = state.controllers[color] === "human";
   document.getElementById("turnName").textContent = `${playerName(color)} (${displayColorName(color)})${isHuman ? "" : " 🤖"}`;
   renderProgress();
