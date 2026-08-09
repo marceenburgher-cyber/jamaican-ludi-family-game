@@ -18,6 +18,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 html { scroll-behavior: smooth; }
 
@@ -239,6 +240,35 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   animation: twinkle 2.4s ease-in-out infinite;
 }
 @keyframes twinkle { 50% { opacity: 1; transform: scale(1.18); } }
+.cell.ring.extreme-action {
+  --extreme-mark:#172019;
+  z-index:1;
+  background:color-mix(in srgb,var(--extreme-mark) 18%,white);
+  box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--extreme-mark) 72%,#111);
+}
+.cell.ring.extreme-action::after {
+  content:attr(data-extreme-label);
+  position:absolute;
+  inset:8%;
+  display:grid;
+  place-items:center;
+  z-index:1;
+  color:#fff;
+  background:color-mix(in srgb,var(--extreme-mark) 88%,#07130c);
+  border:1px solid rgba(255,255,255,.8);
+  border-radius:22%;
+  font-size:clamp(4px,.52vw,7px);
+  font-weight:1000;
+  line-height:.88;
+  letter-spacing:-.025em;
+  text-align:center;
+  white-space:pre-line;
+  text-shadow:0 1px 1px rgba(0,0,0,.55);
+}
+.cell.ring.extreme-back-born { --extreme-mark:#b51f2b; }
+.cell.ring.extreme-back-10 { --extreme-mark:#333a36; }
+.cell.ring.extreme-forward-10 { --extreme-mark:#087b45; }
+.cell.ring.extreme-safe-home { --extreme-mark:#bd8b00; }
 .cell.ring.blocked { z-index: 2; animation: blockPulse 1.3s ease-in-out infinite; }
 @keyframes blockPulse {
   0%, 100% { box-shadow: inset 0 0 0 3px var(--ink); }

@@ -11,10 +11,12 @@ const CAP_FLAVOR = { Red: "kola", Green: "citrus", Yellow: "cream soda", Blue: "
 const THEMES = {
   family: {
     label: "❤️ FAMILY CREWS",
+    title: "Jamaican Ludi: Family Crews",
     names: { Red: "Auntie Crew", Green: "Grandparents", Yellow: "Cousin Link-Up", Blue: "Pickney Crew" },
   },
   dishes: {
     label: "🍽️ JAMAICAN DISHES",
+    title: "Extreme Ludi: Jamaican Dishes",
     names: { Red: "Jerk Chicken", Green: "Callaloo", Yellow: "Ackee & Saltfish", Blue: "Escovitch Fish" },
   },
 };
@@ -57,7 +59,7 @@ function showPointsToast(message) {
 }
 
 function awardExperiencePoints(color, amount, reason) {
-  if (scenePreviewMode) return;
+  if (scenePreviewMode || state.themeKey !== "dishes") return;
   if (state.controllers[color] !== "human" || amount <= 0) return;
   const previousPoints = experiencePoints;
   experiencePoints += amount;
@@ -72,9 +74,18 @@ function awardExperiencePoints(color, amount, reason) {
 function renderExperiences() {
   const grid = document.getElementById("experienceGrid");
   if (!grid) return;
+  const experiencesButton = document.getElementById("experiencesBtn");
+  const experiencesSection = document.getElementById("experiences");
+  const extremeMode = state.themeKey === "dishes";
+  experiencesButton.hidden = !extremeMode;
+  experiencesSection.hidden = !extremeMode;
+  document.body.classList.toggle("world-active", extremeMode);
+  if (!extremeMode) {
+    document.body.style.removeProperty("--world-image");
+    return;
+  }
   const active = selectedExperience();
   document.body.style.setProperty("--world-image", `url("${active.image}")`);
-  document.body.classList.add("world-active");
 
   const passportLabel = document.querySelector(".points-passport span");
   passportLabel.textContent = scenePreviewMode ? "OWNER PREVIEW" : "Family Points";
@@ -224,6 +235,25 @@ function globalCellForR(color, r) {
 
 const SAFE_RING_IDX = new Set(Object.values(OFFSET));
 
+const EXTREME_ACTIONS = [
+  { key: "back-born", label: "BACK TO BORN", mark: "BACK\nTO\nBORN", className: "extreme-back-born" },
+  { key: "back-10", label: "BACK 10", mark: "BACK\n10", className: "extreme-back-10" },
+  { key: "forward-10", label: "FORWARD 10", mark: "FORWARD\n10", className: "extreme-forward-10" },
+  { key: "safe-home", label: "SAFE HOME", mark: "SAFE\nHOME", className: "extreme-safe-home" },
+];
+
+function createExtremeSpaces() {
+  const quadrants = [
+    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+    [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27],
+    [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41],
+    [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55],
+  ];
+  const positions = quadrants.map((indices) => indices[Math.floor(Math.random() * indices.length)]);
+  const actions = [...EXTREME_ACTIONS].sort(() => Math.random() - 0.5);
+  return actions.map((action, index) => ({ ...action, idx: positions[index] }));
+}
+
 // ============================================================
 // Sound (procedural — no external audio assets)
 // ============================================================
@@ -345,6 +375,7 @@ function freshState() {
     animating: false,
     aiRunning: false,
     awardedBlocks: [],
+    extremeSpaces: createExtremeSpaces(),
     controllers: { Red: "human", Green: "ai", Yellow: "ai", Blue: "ai" },
     themeKey: THEMES[savedTheme] ? savedTheme : "family",
     soundOn: localStorage.getItem("jl_sound") !== "off",
@@ -354,6 +385,7 @@ function freshState() {
 }
 
 let state = freshState();
+if (scenePreviewMode) state.themeKey = "dishes";
 
 function currentColor() {
   return state.order[state.turnIdx];
@@ -412,6 +444,27 @@ function legalDiceForColor(color) {
 // Applying a move (animated) — returns true if the turn should end
 // ============================================================
 
+async function completePieceHome(color, pieceIdx) {
+  const player = state.players[color];
+  const piece = player.pieces[pieceIdx];
+  if (piece.status === "home") return;
+  piece.status = "home";
+  piece.r = FINISH_R;
+  player.finished += 1;
+  awardExperiencePoints(color, 50, "Piece reached home");
+  sfx.home();
+  chat(`${playerName(color)} reach ${player.finished === 4 ? "di last one" : "home"} safe! Big up! 🙌`);
+  if (player.finished === 4 && player.rank === null) {
+    player.rank = state.finishOrder.length + 1;
+    state.finishOrder.push(color);
+    awardExperiencePoints(color, 100, "All four pieces home");
+    if (player.rank === 1) awardExperiencePoints(color, 200, "Game won");
+  }
+  positionPiecesOnly();
+  burstConfetti(cellIndex["7,7"], 22);
+  await wait(200);
+}
+
 async function animateApplyMove(color, pieceIdx, dieSlot) {
   state.animating = true;
   render();
@@ -440,20 +493,7 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
       await wait(HOP_MS);
     }
     if (piece.r === FINISH_R) {
-      piece.status = "home";
-      player.finished += 1;
-      awardExperiencePoints(color, 50, "Piece reached home");
-      sfx.home();
-      chat(`${playerName(color)} reach ${player.finished === 4 ? "di last one" : "home"} safe! Big up! 🙌`);
-      if (player.finished === 4 && player.rank === null) {
-        player.rank = state.finishOrder.length + 1;
-        state.finishOrder.push(color);
-        awardExperiencePoints(color, 100, "All four pieces home");
-        if (player.rank === 1) awardExperiencePoints(color, 200, "Game won");
-      }
-      positionPiecesOnly();
-      burstConfetti(cellIndex["7,7"], 22);
-      await wait(200);
+      await completePieceHome(color, pieceIdx);
     } else {
       await resolveLandingAnimated(color, pieceIdx);
     }
@@ -499,9 +539,54 @@ function awardBlockPoints(color, pieceIdx) {
   }
 }
 
+function extremeActionForPiece(color, piece) {
+  if (state.themeKey !== "dishes" || piece.status !== "active" || piece.r > RING_TRAVEL) return null;
+  const idx = (OFFSET[color] + piece.r) % 56;
+  return state.extremeSpaces.find((space) => space.idx === idx) || null;
+}
+
+async function applyExtremeActionAnimated(color, pieceIdx, action) {
+  const piece = state.players[color].pieces[pieceIdx];
+  showPointsToast(action.label);
+
+  if (action.key === "back-born") {
+    chat(`↩ ${playerName(color)} land pon BACK TO BORN — straight back a yard!`);
+    sfx.kill();
+    piece.status = "yard";
+    piece.r = -1;
+    positionPiecesOnly();
+    await wait(KILL_FLASH_MS);
+    return;
+  }
+
+  if (action.key === "safe-home") {
+    chat(`⌂ ${playerName(color)} find SAFE HOME — straight into home!`);
+    await completePieceHome(color, pieceIdx);
+    return;
+  }
+
+  const direction = action.key === "back-10" ? -1 : 1;
+  const target = direction < 0
+    ? Math.max(0, piece.r - 10)
+    : Math.min(FINISH_R, piece.r + 10);
+  chat(`${direction < 0 ? "−" : "+"} ${playerName(color)} hit ${action.label}!`);
+  for (let r = piece.r + direction; direction < 0 ? r >= target : r <= target; r += direction) {
+    piece.r = r;
+    positionPiecesOnly();
+    sfx.hop();
+    await wait(Math.max(45, Math.floor(HOP_MS * 0.55)));
+  }
+  if (piece.r === FINISH_R) await completePieceHome(color, pieceIdx);
+}
+
 async function resolveLandingAnimated(color, pieceIdx) {
   const piece = state.players[color].pieces[pieceIdx];
   if (piece.r > RING_TRAVEL) return;
+  const extremeAction = extremeActionForPiece(color, piece);
+  if (extremeAction) {
+    await applyExtremeActionAnimated(color, pieceIdx, extremeAction);
+    if (piece.status !== "active" || piece.r > RING_TRAVEL) return;
+  }
   const idx = (OFFSET[color] + piece.r) % 56;
   if (SAFE_RING_IDX.has(idx)) return;
 
@@ -985,6 +1070,27 @@ function updateRegionLabels() {
       bornSpace.setAttribute("aria-label", `${name} Born Space`);
     }
   });
+  updateExtremeBoardMode();
+}
+
+function updateExtremeBoardMode() {
+  boardEl.querySelectorAll(".cell.extreme-action").forEach((cell) => {
+    cell.classList.remove("extreme-action", ...EXTREME_ACTIONS.map((action) => action.className));
+    delete cell.dataset.extremeLabel;
+    cell.removeAttribute("title");
+    cell.removeAttribute("aria-label");
+  });
+  if (state.themeKey !== "dishes") return;
+
+  state.extremeSpaces.forEach((action) => {
+    const [row, col] = RING[action.idx];
+    const cell = cellIndex[`${row},${col}`];
+    if (!cell) return;
+    cell.classList.add("extreme-action", action.className);
+    cell.dataset.extremeLabel = action.mark;
+    cell.title = `Extreme Ludi: ${action.label}`;
+    cell.setAttribute("aria-label", `Extreme Ludi action space: ${action.label}`);
+  });
 }
 
 // Pieces sharing a road square form one clear vertical pile. The offsets are
@@ -1300,7 +1406,14 @@ function updateThemeButton() {
   const label = THEMES[state.themeKey].label.replace(/^\S+\s/, "");
   const icon = state.themeKey === "family" ? "♥" : "🍽︎";
   button.innerHTML = `<span class="theme-switch-icon" aria-hidden="true">${icon}</span><span>${label}</span>`;
-  button.setAttribute("aria-label", `Board theme: ${label}`);
+  document.getElementById("gameModeTitle").textContent = THEMES[state.themeKey].title;
+  document.title = THEMES[state.themeKey].title;
+  document.getElementById("extremeRulesItem").hidden = state.themeKey !== "dishes";
+  const switchTarget = state.themeKey === "family"
+    ? THEMES.dishes.title
+    : THEMES.family.title;
+  button.title = `Switch to ${switchTarget}`;
+  button.setAttribute("aria-label", button.title);
 }
 
 document.getElementById("themeToggleBtn").addEventListener("click", () => {
@@ -1308,6 +1421,7 @@ document.getElementById("themeToggleBtn").addEventListener("click", () => {
   localStorage.setItem("jl_theme", state.themeKey);
   updateThemeButton();
   updateRegionLabels();
+  renderExperiences();
 });
 updateThemeButton();
 
@@ -1394,6 +1508,9 @@ document.getElementById("newGameBtn").addEventListener("click", () => {
   chatterLines.length = 0;
   document.getElementById("winModal").classList.add("hidden");
   chat("New game start — everybody line up a di yard!");
+  updateThemeButton();
+  updateRegionLabels();
+  renderExperiences();
   render();
   maybeStartAITurn();
 });
