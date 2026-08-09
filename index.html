@@ -24,6 +24,9 @@
 
       <nav class="topbar-actions" aria-label="Game options">
         <button id="themeToggleBtn" class="icon-btn text-btn" type="button" title="Switch board territory names"></button>
+        <button id="experiencesBtn" class="icon-btn text-btn experiences-btn" type="button" title="Explore unlocked Jamaican experiences">
+          <span>EXPERIENCES</span><strong id="headerPoints">0 PTS</strong>
+        </button>
         <button id="musicToggleBtn" class="icon-btn" type="button" title="Toggle reggae instrumental" aria-label="Toggle reggae instrumental"></button>
         <button id="soundToggleBtn" class="icon-btn" type="button" title="Toggle sound" aria-label="Toggle sound"></button>
         <button id="rulesBtn" class="icon-btn text-btn" type="button">HOW TO PLAY</button>
@@ -103,6 +106,33 @@
       </section>
     </main>
 
+    <section id="experiences" class="experiences" aria-labelledby="experiencesTitle">
+      <div class="experiences-heading">
+        <div>
+          <p class="eyebrow">Journey Through Jamaica</p>
+          <h2 id="experiencesTitle">Unlock Visual Experiences</h2>
+          <p>Earn family points through good Ludi play. Experiences change the atmosphere around the table—not the dice, board or movement rules.</p>
+        </div>
+        <div class="points-passport" aria-label="Experience point balance">
+          <span>Family Points</span>
+          <strong id="experiencePoints">0</strong>
+          <small id="nextExperienceText">Your first experience is ready</small>
+        </div>
+      </div>
+
+      <div class="experience-feature" id="experienceFeature">
+        <img id="experienceHeroImage" src="worlds/coolout-coconut-sugarcane.png" alt="Coolout with coconut water and sugarcane">
+        <div class="experience-feature-shade" aria-hidden="true"></div>
+        <div class="experience-feature-copy">
+          <span class="experience-status">Now Visiting</span>
+          <h3 id="experienceHeroTitle">Coolout: Coconut Water &amp; Sugarcane</h3>
+          <p id="experienceHeroDescription">Fresh coconut water, sugarcane and family laughter in the Jamaican sunshine.</p>
+        </div>
+      </div>
+
+      <div id="experienceGrid" class="experience-grid" aria-label="Jamaican experiences"></div>
+    </section>
+
     <footer class="footer">
       <div class="footer-legal">
         <strong>© 2026 Marceen A. Burgher. All rights reserved.</strong>
@@ -112,16 +142,19 @@
     </footer>
   </div>
 
+  <div id="pointsToast" class="points-toast" role="status" aria-live="polite"></div>
+
   <div id="rulesModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
     <div class="modal-card rules-card">
       <button id="rulesCloseBtn" class="modal-close" type="button" aria-label="Close rules">×</button>
       <p class="eyebrow">QUICK GUIDE</p>
       <h2 id="rulesTitle">How To Play Ludi</h2>
       <ol class="rules-list">
-        <li><strong>Roll A Six</strong><span>Bring a piece out of your yard and onto the road.</span></li>
+        <li><strong>Roll A Six</strong><span>Birth a waiting piece or move one already on the road. Finish the other die, then roll again.</span></li>
         <li><strong>Choose Your Move</strong><span>Select a die, then tap one of your glowing pieces.</span></li>
         <li><strong>Send Rivals Home</strong><span>Land on a rival piece to return it to their yard. Star spaces are safe.</span></li>
         <li><strong>Reach The Center</strong><span>Get all four pieces home first. You need the exact roll to finish.</span></li>
+        <li><strong>Earn Family Points</strong><span>Birth pieces, form blocks, capture rivals, reach home and win to unlock Jamaican experiences.</span></li>
       </ol>
       <button id="rulesDoneBtn" class="roll-btn modal-action" type="button">Ready Fi Play</button>
     </div>

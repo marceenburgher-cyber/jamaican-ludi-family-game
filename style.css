@@ -1282,6 +1282,158 @@ body {
   background:linear-gradient(rgba(255,255,255,.02),rgba(255,255,255,.02));
 }
 
+/* ============================================================
+   Journey Through Jamaica — visual rewards outside board geometry
+   ============================================================ */
+body.world-active {
+  background:
+    linear-gradient(145deg, rgba(5,22,13,.92), rgba(3,16,9,.88)),
+    radial-gradient(circle at 50% 18%, rgba(244,191,41,.16), transparent 38rem),
+    var(--world-image) center / cover fixed no-repeat;
+}
+
+.experiences-btn { gap:8px; }
+.experiences-btn strong {
+  padding:3px 7px;
+  border-radius:999px;
+  color:#151b12;
+  background:var(--gold);
+  font-size:.58rem;
+  letter-spacing:.05em;
+}
+
+.experiences {
+  margin:22px 0 10px;
+  padding:clamp(18px,3vw,34px);
+  border:1px solid rgba(244,191,41,.28);
+  border-radius:26px;
+  color:#f3f6f3;
+  background:linear-gradient(145deg,rgba(8,30,18,.97),rgba(5,18,11,.98));
+  box-shadow:0 28px 70px rgba(0,0,0,.34);
+  scroll-margin-top:18px;
+}
+.experiences-heading {
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:28px;
+  margin-bottom:20px;
+}
+.experiences-heading h2 {
+  margin:3px 0 8px;
+  color:#fffdf8;
+  font-family:"Fraunces",Georgia,serif;
+  font-size:clamp(1.55rem,3vw,2.35rem);
+  line-height:1.05;
+}
+.experiences-heading > div:first-child > p:last-child {
+  max-width:680px;
+  margin:0;
+  color:#aebbb2;
+  font-size:.82rem;
+  line-height:1.55;
+}
+.points-passport {
+  min-width:210px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:2px 16px;
+  padding:14px 16px;
+  border:1px solid rgba(244,191,41,.28);
+  border-radius:16px;
+  background:rgba(255,255,255,.055);
+}
+.points-passport span { color:#aab6ae; font-size:.62rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.points-passport strong { grid-row:1 / 3; grid-column:2; align-self:center; color:var(--gold); font-family:"Fraunces",Georgia,serif; font-size:1.65rem; }
+.points-passport small { max-width:165px; color:#dce4de; font-size:.62rem; line-height:1.35; }
+
+.experience-feature {
+  position:relative;
+  min-height:clamp(290px,48vw,570px);
+  overflow:hidden;
+  border:2px solid rgba(244,191,41,.55);
+  border-radius:22px;
+  background:#102016;
+  box-shadow:0 20px 48px rgba(0,0,0,.38);
+}
+.experience-feature > img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; }
+.experience-feature-shade { position:absolute; inset:0; background:linear-gradient(180deg,transparent 36%,rgba(2,10,6,.88) 100%); }
+.experience-feature-copy { position:absolute; z-index:2; left:clamp(18px,4vw,42px); right:clamp(18px,4vw,42px); bottom:clamp(18px,4vw,36px); max-width:670px; }
+.experience-status { display:inline-flex; margin-bottom:8px; padding:5px 9px; border-radius:999px; color:#152014; background:var(--gold); font-size:.58rem; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
+.experience-feature h3 { margin:0 0 7px; color:white; font-family:"Fraunces",Georgia,serif; font-size:clamp(1.45rem,3vw,2.5rem); line-height:1.05; text-shadow:0 3px 15px rgba(0,0,0,.65); }
+.experience-feature p { margin:0; color:#e4ebe6; font-size:clamp(.75rem,1.4vw,.95rem); line-height:1.5; text-shadow:0 2px 8px rgba(0,0,0,.75); }
+
+.experience-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.experience-card {
+  position:relative;
+  min-height:175px;
+  overflow:hidden;
+  padding:0;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:15px;
+  color:white;
+  background:#102016;
+  cursor:pointer;
+  text-align:left;
+  transition:transform 160ms ease,border-color 160ms ease,box-shadow 160ms ease;
+}
+.experience-card:hover { transform:translateY(-2px); border-color:rgba(244,191,41,.72); }
+.experience-card.selected { border:2px solid var(--gold); box-shadow:0 0 0 3px rgba(244,191,41,.14); }
+.experience-card > img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.experience-card.locked > img { filter:grayscale(.72) brightness(.46); }
+.experience-card-shade { position:absolute; inset:0; background:linear-gradient(180deg,transparent 28%,rgba(2,10,6,.93) 100%); }
+.experience-card-copy { position:absolute; z-index:2; left:12px; right:12px; bottom:11px; display:grid; gap:4px; }
+.experience-card-copy strong { font-family:"Fraunces",Georgia,serif; font-size:.82rem; line-height:1.14; }
+.experience-card-copy small { color:var(--gold); font-size:.52rem; font-weight:900; letter-spacing:.06em; }
+.experience-card.locked .experience-card-copy small { color:#d9dfda; }
+
+.points-toast {
+  position:fixed;
+  z-index:200;
+  left:50%;
+  bottom:24px;
+  max-width:min(90vw,520px);
+  padding:12px 18px;
+  border:1px solid rgba(244,191,41,.58);
+  border-radius:999px;
+  color:#11180f;
+  background:var(--gold);
+  box-shadow:0 14px 40px rgba(0,0,0,.4);
+  font-size:.75rem;
+  font-weight:900;
+  text-align:center;
+  transform:translate(-50%,28px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 180ms ease,transform 180ms ease;
+}
+.points-toast.show { opacity:1; transform:translate(-50%,0); }
+
+@media (max-width:1000px) {
+  .experience-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .topbar { align-items:flex-start; padding:18px 0; }
+  .topbar-actions { justify-content:flex-end; flex-wrap:wrap; }
+}
+@media (max-width:720px) {
+  .experiences-heading { align-items:stretch; flex-direction:column; gap:16px; }
+  .points-passport { width:100%; min-width:0; }
+  .experience-grid { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; padding:0 0 8px; }
+  .experience-card { min-width:min(74vw,270px); scroll-snap-align:start; }
+}
+@media (max-width:560px) {
+  .experiences-btn span:first-child { display:none; }
+  .experiences-btn strong { font-size:.55rem; }
+  .experiences { margin-top:14px; padding:14px; border-radius:18px; }
+  .experience-feature { min-height:360px; border-radius:15px; }
+  .experience-feature > img { object-position:center; }
+  .experience-card { min-height:160px; }
+}
+
 /* Portrait phone/tablet layout: scale the complete game without changing board geometry. */
 @media (max-width:820px) {
   .layout {

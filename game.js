@@ -19,6 +19,102 @@ const THEMES = {
   },
 };
 
+const EXPERIENCES = [
+  { key: "coolout", name: "Coolout: Coconut Water & Sugarcane", cost: 0, image: "worlds/coolout-coconut-sugarcane.png", description: "Fresh coconut water, sugarcane and family laughter in the Jamaican sunshine." },
+  { key: "boston", name: "Boston Jerk Pit Stop", cost: 200, image: "worlds/boston-jerk-pit-stop.png", description: "Pimento smoke, jerk chicken, festival and a proper Portland food stop." },
+  { key: "bath", name: "Bath Fountain Soothing", cost: 400, image: "worlds/bath-fountain-soothing.png", description: "Slow down beside the warm mineral waters and the green hills of St. Thomas." },
+  { key: "hellshire", name: "Hellshire Beach Getaway", cost: 650, image: "worlds/hellshire-beach-getaway.png", description: "Beach breeze, fishing boats and fresh food shared beside the Caribbean Sea." },
+  { key: "blue-mountain", name: "Blue Mountain Adventure", cost: 900, image: "worlds/blue-mountain-adventure.png", description: "A cool sunrise, mountain mist and a family climb above the coffee plants." },
+  { key: "portland", name: "Portland Lagoon Rafting", cost: 1200, image: "worlds/portland-lagoon-rafting.png", description: "Glide across clear turquoise water on handmade bamboo rafts." },
+  { key: "negril", name: "Negril Sunset & Cliff Diving", cost: 1550, image: "worlds/negril-sunset-cliff-diving.png", description: "Golden sunset, calm sea and a daring leap from the Negril cliffs." },
+  { key: "dunns-river", name: "Climb Dunn’s River Falls", cost: 1900, image: "worlds/dunns-river-falls.png", description: "Join hands and climb the sparkling waterfall together." },
+  { key: "luminous", name: "Trelawny Luminous Lagoon", cost: 2300, image: "worlds/trelawny-luminous-lagoon.png", description: "Watch the lagoon glow blue beneath a star-filled Jamaican sky." },
+  { key: "rose-hall", name: "Rose Hall Great House", cost: 2750, image: "worlds/rose-hall-great-house.png", description: "An elegant evening heritage visit beneath warm lantern light." },
+  { key: "kingston", name: "Kingston Dancehall Night", cost: 3300, image: "worlds/kingston-dancehall-night.png", description: "Dress up, step out and enjoy a grown-up Kingston dancehall celebration." },
+];
+
+let experiencePoints = Math.max(0, Number.parseInt(localStorage.getItem("jl_experiencePoints") || "0", 10) || 0);
+let selectedExperienceKey = localStorage.getItem("jl_selectedExperience") || "coolout";
+let pointsToastTimer = null;
+
+function selectedExperience() {
+  const requested = EXPERIENCES.find((experience) => experience.key === selectedExperienceKey);
+  if (requested && experiencePoints >= requested.cost) return requested;
+  selectedExperienceKey = "coolout";
+  return EXPERIENCES[0];
+}
+
+function showPointsToast(message) {
+  const toast = document.getElementById("pointsToast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  window.clearTimeout(pointsToastTimer);
+  pointsToastTimer = window.setTimeout(() => toast.classList.remove("show"), 2400);
+}
+
+function awardExperiencePoints(color, amount, reason) {
+  if (state.controllers[color] !== "human" || amount <= 0) return;
+  const previousPoints = experiencePoints;
+  experiencePoints += amount;
+  localStorage.setItem("jl_experiencePoints", String(experiencePoints));
+  const newlyUnlocked = EXPERIENCES.filter((experience) => experience.cost > previousPoints && experience.cost <= experiencePoints);
+  showPointsToast(newlyUnlocked.length
+    ? `+${amount} points · ${newlyUnlocked.at(-1).name} unlocked!`
+    : `+${amount} points · ${reason}`);
+  renderExperiences();
+}
+
+function renderExperiences() {
+  const grid = document.getElementById("experienceGrid");
+  if (!grid) return;
+  const active = selectedExperience();
+  document.body.style.setProperty("--world-image", `url("${active.image}")`);
+  document.body.classList.add("world-active");
+
+  document.getElementById("experiencePoints").textContent = experiencePoints.toLocaleString();
+  document.getElementById("headerPoints").textContent = `${experiencePoints.toLocaleString()} PTS`;
+  document.getElementById("experienceHeroImage").src = active.image;
+  document.getElementById("experienceHeroImage").alt = active.name;
+  document.getElementById("experienceHeroTitle").textContent = active.name;
+  document.getElementById("experienceHeroDescription").textContent = active.description;
+
+  const next = EXPERIENCES.find((experience) => experience.cost > experiencePoints);
+  document.getElementById("nextExperienceText").textContent = next
+    ? `${next.cost - experiencePoints} points to ${next.name}`
+    : "Every Jamaican experience unlocked";
+
+  grid.replaceChildren();
+  EXPERIENCES.forEach((experience) => {
+    const unlocked = experiencePoints >= experience.cost;
+    const selected = experience.key === active.key;
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = `experience-card${unlocked ? " unlocked" : " locked"}${selected ? " selected" : ""}`;
+    card.setAttribute("aria-label", unlocked
+      ? `${experience.name}, ${selected ? "currently selected" : "unlocked"}`
+      : `${experience.name}, locked until ${experience.cost} points`);
+    card.innerHTML = `
+      <img src="${experience.image}" alt="" loading="lazy">
+      <span class="experience-card-shade" aria-hidden="true"></span>
+      <span class="experience-card-copy">
+        <strong>${experience.name}</strong>
+        <small>${selected ? "NOW VISITING" : unlocked ? "UNLOCKED · TAP TO VISIT" : `🔒 ${experience.cost.toLocaleString()} POINTS`}</small>
+      </span>`;
+    card.addEventListener("click", () => {
+      if (!unlocked) {
+        showPointsToast(`${experience.cost - experiencePoints} more points to unlock ${experience.name}`);
+        return;
+      }
+      selectedExperienceKey = experience.key;
+      localStorage.setItem("jl_selectedExperience", selectedExperienceKey);
+      renderExperiences();
+      document.getElementById("experienceFeature").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    grid.appendChild(card);
+  });
+}
+
 // Board TERRITORY names (the yard you're born in + the home stretch you run
 // for) — these label fixed regions on the board itself, not the players.
 function regionName(color) {
@@ -240,6 +336,7 @@ function freshState() {
     gameOver: false,
     animating: false,
     aiRunning: false,
+    awardedBlocks: [],
     controllers: { Red: "human", Green: "ai", Yellow: "ai", Blue: "ai" },
     themeKey: THEMES[savedTheme] ? savedTheme : "family",
     soundOn: localStorage.getItem("jl_sound") !== "off",
@@ -322,6 +419,7 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
     flashBirth(color, pieceIdx);
     sfx.birth();
     chat(`${playerName(color)} bring a piece a road! Six a di magic number! 🎲`);
+    awardExperiencePoints(color, 10, "Piece born");
     await wait(BIRTH_MS);
     await resolveLandingAnimated(color, pieceIdx);
   } else {
@@ -336,11 +434,14 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
     if (piece.r === FINISH_R) {
       piece.status = "home";
       player.finished += 1;
+      awardExperiencePoints(color, 50, "Piece reached home");
       sfx.home();
       chat(`${playerName(color)} reach ${player.finished === 4 ? "di last one" : "home"} safe! Big up! 🙌`);
       if (player.finished === 4 && player.rank === null) {
         player.rank = state.finishOrder.length + 1;
         state.finishOrder.push(color);
+        awardExperiencePoints(color, 100, "All four pieces home");
+        if (player.rank === 1) awardExperiencePoints(color, 200, "Game won");
       }
       positionPiecesOnly();
       burstConfetti(cellIndex["7,7"], 22);
@@ -349,6 +450,8 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
       await resolveLandingAnimated(color, pieceIdx);
     }
   }
+
+  awardBlockPoints(color, pieceIdx);
 
   state.diceUsed[dieSlot] = true;
   state.animating = false;
@@ -371,6 +474,23 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
   return bothUsed || noMoreLegal;
 }
 
+function awardBlockPoints(color, pieceIdx) {
+  if (state.controllers[color] !== "human") return;
+  const piece = state.players[color].pieces[pieceIdx];
+  if (piece.status !== "active" || piece.r > RING_TRAVEL) return;
+  const idx = (OFFSET[color] + piece.r) % 56;
+  const ownPieces = state.players[color].pieces.filter((otherPiece) =>
+    otherPiece.status === "active"
+    && otherPiece.r <= RING_TRAVEL
+    && (OFFSET[color] + otherPiece.r) % 56 === idx
+  ).length;
+  const blockKey = `${color}:${idx}`;
+  if (ownPieces === 2 && !state.awardedBlocks.includes(blockKey)) {
+    state.awardedBlocks.push(blockKey);
+    awardExperiencePoints(color, 20, "Block formed");
+  }
+}
+
 async function resolveLandingAnimated(color, pieceIdx) {
   const piece = state.players[color].pieces[pieceIdx];
   if (piece.r > RING_TRAVEL) return;
@@ -387,6 +507,8 @@ async function resolveLandingAnimated(color, pieceIdx) {
     });
   });
   if (kills.length === 0) return;
+
+  awardExperiencePoints(color, kills.length * 25, kills.length === 1 ? "Rival captured" : `${kills.length} rivals captured`);
 
   kills.forEach(({ color: c, pieceIdx: pi }) => flashKill(c, pi));
   sfx.kill();
@@ -1161,6 +1283,9 @@ function showFinalStandings() {
 document.getElementById("rollBtn").addEventListener("click", () => { ensureAudio(); if (state.musicOn) startMusic(); rollDice(); });
 document.getElementById("die1").addEventListener("click", () => armDie(0));
 document.getElementById("die2").addEventListener("click", () => armDie(1));
+document.getElementById("experiencesBtn").addEventListener("click", () => {
+  document.getElementById("experiences").scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 function updateThemeButton() {
   const button = document.getElementById("themeToggleBtn");
@@ -1271,5 +1396,6 @@ document.getElementById("winCloseBtn").addEventListener("click", () => {
 buildBoardDOM();
 buildPlayersPanel();
 chat("Wah gwaan! Welcome to Jamaican Ludi — roll a six fi bring out yuh first piece!");
+renderExperiences();
 render();
 maybeStartAITurn();
