@@ -359,7 +359,7 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
   if (state.gameOver) return false;
 
   const bothUsed = state.diceUsed[0] && state.diceUsed[1];
-  const noMoreLegal = !bothUsed && legalDiceForColor(color)[state.diceUsed[0] ? 1 : 0].length === 0;
+  const noMoreLegal = !bothUsed && nextUsableDie == null;
   return bothUsed || noMoreLegal;
 }
 
