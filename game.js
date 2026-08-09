@@ -351,8 +351,16 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
   }
 
   state.diceUsed[dieSlot] = true;
-  const noMoreLegal = !bothUsed && nextUsableDie == null;
   state.animating = false;
+
+  // A six brings a piece out, but it does not spend the other die. Arm the
+  // next usable die automatically so a 6 + 2 can birth a piece and then move
+  // it (or another eligible piece) two spaces without appearing to end early.
+  const remainingLegal = legalDiceForColor(color);
+  const nextUsableDie = [0, 1].find(
+    (slot) => !state.diceUsed[slot] && remainingLegal[slot].length > 0,
+  );
+  state.armedDie = nextUsableDie ?? null;
 
   checkGameOver();
   render();
@@ -414,7 +422,7 @@ function checkGameOver() {
 // ============================================================
 
 async function performRoll() {
-  function finishTurnSequence(wasDouble) {
+  const color = currentColor();
   state.animating = true;
   render();
 
@@ -471,7 +479,7 @@ async function handleNoLegalRoll(color) {
 
 async function rollDice() {
   if (state.gameOver || state.animating || state.controllers[currentColor()] !== "human") return;
-  function finishTurnSequence(wasDouble) {
+  const color = currentColor();
   if (state.players[color].finished === 4) { advanceTurn(); return; }
   const { anyLegal } = await performRoll();
   if (!anyLegal) handleNoLegalRoll(color);
@@ -500,7 +508,19 @@ async function pieceClicked(color, pieceIdx) {
 
 function finishTurnSequence(wasDouble) {
   if (state.gameOver) return;
-  function finishTurnSequence(wasDouble) {
+  const color = currentColor();
+  const rolledSix = state.dice.includes(6);
+  if (rolledSix) {
+    state.doublesStreak = 0;
+    state.rolled = false;
+    state.dice = [null, null];
+    state.diceUsed = [false, false];
+    state.armedDie = null;
+    chat(`${playerName(color)} roll a six — roll again!`);
+    render();
+    maybeStartAITurn();
+    return;
+  }
   if (wasDouble && state.doublesStreak < 2) {
     state.doublesStreak++;
     state.rolled = false;
@@ -574,7 +594,7 @@ async function aiTakeTurn() {
   state.aiRunning = true;
   try {
     while (!state.gameOver && state.controllers[currentColor()] === "ai") {
-      function finishTurnSequence(wasDouble) {
+      const color = currentColor();
       if (state.players[color].finished === 4) { advanceTurn(); continue; }
       await wait(550);
       const { anyLegal } = await performRoll();
@@ -625,14 +645,7 @@ function renderChatter() {
     item.className = `chatter-line${index === 0 ? " new" : ""}`;
     item.textContent = line;
     el.appendChild(item);
-  });// A six brings a piece out, but it does not spend the other die. Arm the
-  // next usable die automatically so a 6 + 2 can birth a piece and then move
-  // it (or another eligible piece) two spaces without appearing to end early.
-  const remainingLegal = legalDiceForColor(color);
-  const nextUsableDie = [0, 1].find(
-    (slot) => !state.diceUsed[slot] && remainingLegal[slot].length > 0,
-  );
-  state.armedDie = nextUsableDie ?? null;
+  });
 }
 
 // ============================================================
@@ -866,7 +879,7 @@ function cellCoordFor(color, piece, slotIdx) {
 }
 
 function positionPiecesOnly() {
-  function finishTurnSequence(wasDouble) {
+  const color = currentColor();
   const legal =
     state.rolled && !state.animating && state.controllers[color] === "human"
       ? legalDiceForColor(color)
@@ -987,7 +1000,7 @@ function render() {
 }
 
 function renderSidebar(legal) {
-  function finishTurnSequence(wasDouble) {
+  const color = currentColor();
   const isHuman = state.controllers[color] === "human";
   document.getElementById("turnSwatch").style.background = cssColor(color);
   document.getElementById("turnIndicator").style.setProperty("--glow", cssColor(color));
@@ -1113,7 +1126,7 @@ function updatePlayersPanel() {
 // Cheap refresh for text that references the current player's name, without
 // touching pieces/board — used while typing so we don't fight the input focus.
 function renderSidebarTextOnly() {
-  function finishTurnSequence(wasDouble) {
+  const color = currentColor();
   const isHuman = state.controllers[color] === "human";
   document.getElementById("turnName").textContent = `${playerName(color)} (${displayColorName(color)})${isHuman ? "" : " 🤖"}`;
   renderProgress();
