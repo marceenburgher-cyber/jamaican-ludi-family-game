@@ -236,10 +236,10 @@ function globalCellForR(color, r) {
 const SAFE_RING_IDX = new Set(Object.values(OFFSET));
 
 const EXTREME_ACTIONS = [
-  { key: "back-born", label: "BACK TO BORN", mark: "BACK\nTO\nBORN", className: "extreme-back-born" },
-  { key: "back-10", label: "BACK 10", mark: "BACK\n10", className: "extreme-back-10" },
-  { key: "forward-10", label: "FORWARD 10", mark: "FORWARD\n10", className: "extreme-forward-10" },
-  { key: "safe-home", label: "SAFE HOME", mark: "SAFE\nHOME", className: "extreme-safe-home" },
+  { key: "back-born", label: "BACK TO BORN", mark: "BACK\nTO\nBORN", symbol: "↩", className: "extreme-back-born" },
+  { key: "back-10", label: "BACK 10", mark: "BACK\n10", symbol: "−10", className: "extreme-back-10" },
+  { key: "forward-10", label: "FORWARD 10", mark: "FORWARD\n10", symbol: "+10", className: "extreme-forward-10" },
+  { key: "safe-home", label: "SAFE HOME", mark: "SAFE\nHOME", symbol: "⌂", className: "extreme-safe-home" },
 ];
 
 function createExtremeSpaces() {
@@ -1077,6 +1077,7 @@ function updateExtremeBoardMode() {
   boardEl.querySelectorAll(".cell.extreme-action").forEach((cell) => {
     cell.classList.remove("extreme-action", ...EXTREME_ACTIONS.map((action) => action.className));
     delete cell.dataset.extremeLabel;
+    delete cell.dataset.extremeSymbol;
     cell.removeAttribute("title");
     cell.removeAttribute("aria-label");
   });
@@ -1088,6 +1089,7 @@ function updateExtremeBoardMode() {
     if (!cell) return;
     cell.classList.add("extreme-action", action.className);
     cell.dataset.extremeLabel = action.mark;
+    cell.dataset.extremeSymbol = action.symbol;
     cell.title = `Extreme Ludi: ${action.label}`;
     cell.setAttribute("aria-label", `Extreme Ludi action space: ${action.label}`);
   });
@@ -1409,6 +1411,7 @@ function updateThemeButton() {
   document.getElementById("gameModeTitle").textContent = THEMES[state.themeKey].title;
   document.title = THEMES[state.themeKey].title;
   document.getElementById("extremeRulesItem").hidden = state.themeKey !== "dishes";
+  document.getElementById("extremeActionKey").hidden = state.themeKey !== "dishes";
   const switchTarget = state.themeKey === "family"
     ? THEMES.dishes.title
     : THEMES.family.title;
