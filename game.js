@@ -37,12 +37,31 @@ const EXPERIENCES = [
 // changes the points or selected experience saved by the public game.
 const scenePreviewMode = new URLSearchParams(window.location.search).get("preview") === "scenes";
 let experiencePoints = Math.max(0, Number.parseInt(localStorage.getItem("jl_experiencePoints") || "0", 10) || 0);
+const EXTREME_TOKEN_POINTS = 20;
+let extremeTokens = Math.max(0, Number.parseInt(localStorage.getItem("jl_extremeTokens") || "0", 10) || 0);
+let extremeTestSessionActive = sessionStorage.getItem("jl_extremeTestSession") === "active";
 let selectedExperienceKey = localStorage.getItem("jl_selectedExperience") || "coolout";
 let pointsToastTimer = null;
 
+// Start the public test economy clean so points earned under the earlier,
+// much more generous reward model cannot create an unrealistic token balance.
+if (localStorage.getItem("jl_rewardModel") !== "extreme-token-test-v1") {
+  experiencePoints = 0;
+  extremeTokens = 0;
+  extremeTestSessionActive = false;
+  localStorage.setItem("jl_experiencePoints", "0");
+  localStorage.setItem("jl_extremeTokens", "0");
+  localStorage.setItem("jl_rewardModel", "extreme-token-test-v1");
+  sessionStorage.removeItem("jl_extremeTestSession");
+}
+
+function canViewTestExperiences() {
+  return scenePreviewMode || extremeTestSessionActive;
+}
+
 function selectedExperience() {
   const requested = EXPERIENCES.find((experience) => experience.key === selectedExperienceKey);
-  if (requested && (scenePreviewMode || experiencePoints >= requested.cost)) return requested;
+  if (requested && (canViewTestExperiences() || requested.cost === 0)) return requested;
   selectedExperienceKey = "coolout";
   return EXPERIENCES[0];
 }
@@ -57,15 +76,23 @@ function showPointsToast(message) {
 }
 
 function awardExperiencePoints(color, amount, reason) {
-  if (scenePreviewMode || state.themeKey !== "dishes") return;
+  if (scenePreviewMode) return;
   if (state.controllers[color] !== "human" || amount <= 0) return;
   const previousPoints = experiencePoints;
   experiencePoints += amount;
+  const tokensEarned = Math.floor(experiencePoints / EXTREME_TOKEN_POINTS);
+  if (tokensEarned > 0) {
+    experiencePoints %= EXTREME_TOKEN_POINTS;
+    extremeTokens += tokensEarned;
+    localStorage.setItem("jl_extremeTokens", String(extremeTokens));
+  }
   localStorage.setItem("jl_experiencePoints", String(experiencePoints));
   const newlyUnlocked = EXPERIENCES.filter((experience) => experience.cost > previousPoints && experience.cost <= experiencePoints);
   showPointsToast(newlyUnlocked.length
     ? `+${amount} points · ${newlyUnlocked.at(-1).name} unlocked!`
     : `+${amount} points · ${reason}`);
+  if (tokensEarned > 0) showPointsToast(`Free Extreme Ludi token earned! ${extremeTokens} ready`);
+  updateThemeButton();
   renderExperiences();
 }
 
@@ -86,24 +113,21 @@ function renderExperiences() {
   document.body.style.setProperty("--world-image", `url("${active.image}")`);
 
   const passportLabel = document.querySelector(".points-passport span");
-  passportLabel.textContent = scenePreviewMode ? "OWNER PREVIEW" : "Family Points";
-  document.getElementById("experiencePoints").textContent = scenePreviewMode ? "ALL SCENES" : experiencePoints.toLocaleString();
-  document.getElementById("headerPoints").textContent = scenePreviewMode ? "PREVIEW" : `${experiencePoints.toLocaleString()} PTS`;
+  passportLabel.textContent = scenePreviewMode ? "OWNER PREVIEW" : "Extreme Test Tokens";
+  document.getElementById("experiencePoints").textContent = scenePreviewMode ? "ALL SCENES" : extremeTokens.toLocaleString();
+  document.getElementById("headerPoints").textContent = scenePreviewMode ? "PREVIEW" : `${extremeTokens} TOKEN${extremeTokens === 1 ? "" : "S"}`;
   document.getElementById("experienceHeroImage").src = active.image;
   document.getElementById("experienceHeroImage").alt = active.name;
   document.getElementById("experienceHeroTitle").textContent = active.name;
   document.getElementById("experienceHeroDescription").textContent = active.description;
 
-  const next = EXPERIENCES.find((experience) => experience.cost > experiencePoints);
   document.getElementById("nextExperienceText").textContent = scenePreviewMode
     ? "Scene review only - game points remain unchanged"
-    : next
-      ? `${next.cost - experiencePoints} points to ${next.name}`
-      : "Every Jamaican experience unlocked";
+    : `${experiencePoints}/${EXTREME_TOKEN_POINTS} points toward your next free token`;
 
   grid.replaceChildren();
   EXPERIENCES.forEach((experience) => {
-    const unlocked = scenePreviewMode || experiencePoints >= experience.cost;
+    const unlocked = canViewTestExperiences() || experience.cost === 0;
     const selected = experience.key === active.key;
     const card = document.createElement("button");
     card.type = "button";
@@ -237,17 +261,13 @@ const EXTREME_ACTIONS = [
   { key: "back-born", label: "BACK TO BORN", mark: "BACK\nTO\nBORN", symbol: "↩", className: "extreme-back-born" },
   { key: "back-10", label: "BACK 10", mark: "BACK\n10", symbol: "−10", className: "extreme-back-10" },
   { key: "forward-10", label: "FORWARD 10", mark: "FORWARD\n10", symbol: "+10", className: "extreme-forward-10" },
-  { key: "safe-home", label: "SAFE HOME", mark: "SAFE\nHOME", symbol: "⌂", className: "extreme-safe-home" },
+  { key: "safe-kill", label: "SAFE KILL", mark: "SAFE\nKILL", symbol: "◆", className: "extreme-safe-kill" },
 ];
 
 function createExtremeSpaces() {
-  const quadrants = [
-    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
-    [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27],
-    [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41],
-    [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55],
-  ];
-  const positions = quadrants.map((indices) => indices[Math.floor(Math.random() * indices.length)]);
+  // Place each action on the third white travel space after its Born Space.
+  // The verified ring geometry stays untouched; only action assignments shuffle.
+  const positions = Object.values(OFFSET).map((bornIdx) => (bornIdx + 3) % RING.length);
   const actions = [...EXTREME_ACTIONS].sort(() => Math.random() - 0.5);
   return actions.map((action, index) => ({ ...action, idx: positions[index] }));
 }
@@ -448,14 +468,14 @@ async function completePieceHome(color, pieceIdx) {
   piece.status = "home";
   piece.r = FINISH_R;
   player.finished += 1;
-  awardExperiencePoints(color, 50, "Piece reached home");
+  awardExperiencePoints(color, 5, "Piece reached home");
   sfx.home();
   chat(`${playerName(color)} reach ${player.finished === 4 ? "di last one" : "home"} safe! Big up! 🙌`);
   if (player.finished === 4 && player.rank === null) {
     player.rank = state.finishOrder.length + 1;
     state.finishOrder.push(color);
-    awardExperiencePoints(color, 100, "All four pieces home");
-    if (player.rank === 1) awardExperiencePoints(color, 200, "Game won");
+    awardExperiencePoints(color, 5, "All four pieces home");
+    if (player.rank === 1) awardExperiencePoints(color, 10, "Game won");
   }
   positionPiecesOnly();
   burstConfetti(cellIndex["7,7"], 22);
@@ -477,7 +497,7 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
     flashBirth(color, pieceIdx);
     sfx.birth();
     chat(`${playerName(color)} bring a piece a road! Six a di magic number! 🎲`);
-    awardExperiencePoints(color, 10, "Piece born");
+    awardExperiencePoints(color, 1, "Piece born");
     await wait(BIRTH_MS);
     await resolveLandingAnimated(color, pieceIdx);
   } else {
@@ -532,7 +552,7 @@ function awardBlockPoints(color, pieceIdx) {
   const blockKey = `${color}:${idx}`;
   if (ownPieces === 2 && !state.awardedBlocks.includes(blockKey)) {
     state.awardedBlocks.push(blockKey);
-    awardExperiencePoints(color, 20, "Block formed");
+    awardExperiencePoints(color, 2, "Block formed");
   }
 }
 
@@ -540,6 +560,12 @@ function extremeActionForPiece(color, piece) {
   if (state.themeKey !== "dishes" || piece.status !== "active" || piece.r > RING_TRAVEL) return null;
   const idx = (OFFSET[color] + piece.r) % 56;
   return state.extremeSpaces.find((space) => space.idx === idx) || null;
+}
+
+function isSafeFromCapture(idx) {
+  if (SAFE_RING_IDX.has(idx)) return true;
+  return state.themeKey === "dishes"
+    && state.extremeSpaces.some((space) => space.idx === idx && space.key === "safe-kill");
 }
 
 async function applyExtremeActionAnimated(color, pieceIdx, action) {
@@ -556,9 +582,8 @@ async function applyExtremeActionAnimated(color, pieceIdx, action) {
     return;
   }
 
-  if (action.key === "safe-home") {
-    chat(`⌂ ${playerName(color)} find SAFE HOME — straight into home!`);
-    await completePieceHome(color, pieceIdx);
+  if (action.key === "safe-kill") {
+    chat(`◆ ${playerName(color)} land pon SAFE KILL — nobody can kill dem here!`);
     return;
   }
 
@@ -585,7 +610,7 @@ async function resolveLandingAnimated(color, pieceIdx) {
     if (piece.status !== "active" || piece.r > RING_TRAVEL) return;
   }
   const idx = (OFFSET[color] + piece.r) % 56;
-  if (SAFE_RING_IDX.has(idx)) return;
+  if (isSafeFromCapture(idx)) return;
 
   const kills = [];
   COLORS.forEach((other) => {
@@ -598,7 +623,7 @@ async function resolveLandingAnimated(color, pieceIdx) {
   });
   if (kills.length === 0) return;
 
-  awardExperiencePoints(color, kills.length * 25, kills.length === 1 ? "Rival captured" : `${kills.length} rivals captured`);
+  awardExperiencePoints(color, kills.length * 3, kills.length === 1 ? "Rival captured" : `${kills.length} rivals captured`);
 
   kills.forEach(({ color: c, pieceIdx: pi }) => flashKill(c, pi));
   sfx.kill();
@@ -773,7 +798,7 @@ function scoreMove(color, pieceIdx, slot) {
   if (newR === FINISH_R) return score + 100;
   if (newR <= RING_TRAVEL) {
     const idx = (OFFSET[color] + newR) % 56;
-    if (!SAFE_RING_IDX.has(idx)) {
+    if (!isSafeFromCapture(idx)) {
       const occ = ringOccupancy(idx);
       COLORS.forEach((other) => { if (other !== color && (occ[other] || 0) === 1) score += 80; });
     } else {
@@ -1403,7 +1428,9 @@ document.getElementById("experiencesBtn").addEventListener("click", () => {
 function updateThemeButton() {
   const button = document.getElementById("themeToggleBtn");
   const extremeMode = state.themeKey === "dishes";
-  const buttonLabel = extremeMode ? "PLAY JAMAICAN LUDI" : "PLAY EXTREME LUDI";
+  const buttonLabel = extremeMode
+    ? "PLAY JAMAICAN LUDI"
+    : `PLAY EXTREME LUDI · ${extremeTokens} TOKEN${extremeTokens === 1 ? "" : "S"}`;
   const icon = extremeMode ? "♥" : "⚡";
   button.innerHTML = `<span class="theme-switch-icon" aria-hidden="true">${icon}</span><span>${buttonLabel}</span>`;
   document.getElementById("gameModeTitle").textContent = THEMES[state.themeKey].title;
@@ -1419,6 +1446,17 @@ function updateThemeButton() {
 }
 
 document.getElementById("themeToggleBtn").addEventListener("click", () => {
+  if (state.themeKey === "family" && !scenePreviewMode && !extremeTestSessionActive) {
+    if (extremeTokens < 1) {
+      showPointsToast(`Earn ${EXTREME_TOKEN_POINTS - experiencePoints} more points for a free Extreme Ludi token`);
+      return;
+    }
+    extremeTokens -= 1;
+    extremeTestSessionActive = true;
+    localStorage.setItem("jl_extremeTokens", String(extremeTokens));
+    sessionStorage.setItem("jl_extremeTestSession", "active");
+    showPointsToast("Extreme Ludi test token accepted · All scenes ready!");
+  }
   state.themeKey = state.themeKey === "family" ? "dishes" : "family";
   updateThemeButton();
   updateRegionLabels();
