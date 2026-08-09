@@ -509,8 +509,8 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 @media (max-width: 1100px) {
   .layout { grid-template-columns: minmax(0, 1fr) 330px; gap: 14px 18px; }
   .board-frame { padding-inline: 48px; }
-  .topbar-actions .text-btn { font-size: 0; min-width: 42px; padding: 0; }
-  #themeToggleBtn::after { content: "◈"; font-size: 1rem; }
+  .topbar-actions .text-btn:not(#themeToggleBtn) { font-size: 0; min-width: 42px; padding: 0; }
+  #themeToggleBtn::after { content: none; }
   #rulesBtn::after { content: "?"; font-size: .9rem; }
 }
 
@@ -1531,6 +1531,15 @@ body.world-active {
   .region-label.home-label.rlY,
   .region-label.home-label.rlB { width:90px; max-width:90px; }
   .turn-panel { position:relative; top:auto; }
+  #themeToggleBtn {
+    width:auto;
+    min-width:132px;
+    justify-content:center;
+    padding:0 10px;
+    font-size:.62rem;
+    line-height:1.05;
+  }
+  #themeToggleBtn::after { content:none; }
 }
 
 @media (max-width:560px) {
@@ -1554,15 +1563,16 @@ body.world-active {
     gap:5px;
   }
   #themeToggleBtn {
-    width:38px;
-    min-width:38px;
+    width:auto;
+    min-width:108px;
     display:inline-flex;
     justify-content:center;
-    padding:0;
-    font-size:0;
+    padding:0 7px;
+    font-size:.54rem;
+    line-height:1.05;
   }
   #themeToggleBtn::after { content:none; }
-  #themeToggleBtn > span:last-child { display:none; }
+  #themeToggleBtn > span:last-child { display:inline; }
   .board-frame { padding:0 41px 38px; }
   .region-label.home-label.rlR,
   .region-label.home-label.rlY {

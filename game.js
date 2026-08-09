@@ -10,14 +10,12 @@ const CAP_FLAVOR = { Red: "kola", Green: "citrus", Yellow: "cream soda", Blue: "
 
 const THEMES = {
   family: {
-    label: "❤️ FAMILY CREWS",
-    title: "Jamaican Ludi: Family Crews",
+    title: "Jamaican Ludi",
     names: { Red: "Auntie Crew", Green: "Grandparents", Yellow: "Cousin Link-Up", Blue: "Pickney Crew" },
   },
   dishes: {
-    label: "🍽️ JAMAICAN DISHES",
-    title: "Extreme Ludi: Jamaican Dishes",
-    names: { Red: "Jerk Chicken", Green: "Callaloo", Yellow: "Ackee & Saltfish", Blue: "Escovitch Fish" },
+    title: "Extreme Jamaican Ludi",
+    names: { Red: "Auntie Crew", Green: "Grandparents", Yellow: "Cousin Link-Up", Blue: "Pickney Crew" },
   },
 };
 
@@ -348,7 +346,6 @@ function stopMusic() {
 // ============================================================
 
 function freshState() {
-  const savedTheme = localStorage.getItem("jl_theme");
   const players = {};
   COLORS.forEach((color) => {
     players[color] = {
@@ -377,7 +374,7 @@ function freshState() {
     awardedBlocks: [],
     extremeSpaces: createExtremeSpaces(),
     controllers: { Red: "human", Green: "ai", Yellow: "ai", Blue: "ai" },
-    themeKey: THEMES[savedTheme] ? savedTheme : "family",
+    themeKey: "family",
     soundOn: localStorage.getItem("jl_sound") !== "off",
     musicOn: localStorage.getItem("jl_music") === "on",
     playerNames: loadPlayerNames(),
@@ -1090,7 +1087,7 @@ function updateExtremeBoardMode() {
     cell.classList.add("extreme-action", action.className);
     cell.dataset.extremeLabel = action.mark;
     cell.dataset.extremeSymbol = action.symbol;
-    cell.title = `Extreme Ludi: ${action.label}`;
+    cell.title = `Extreme Jamaican Ludi: ${action.label}`;
     cell.setAttribute("aria-label", `Extreme Ludi action space: ${action.label}`);
   });
 }
@@ -1405,23 +1402,24 @@ document.getElementById("experiencesBtn").addEventListener("click", () => {
 
 function updateThemeButton() {
   const button = document.getElementById("themeToggleBtn");
-  const label = THEMES[state.themeKey].label.replace(/^\S+\s/, "");
-  const icon = state.themeKey === "family" ? "♥" : "🍽︎";
-  button.innerHTML = `<span class="theme-switch-icon" aria-hidden="true">${icon}</span><span>${label}</span>`;
+  const extremeMode = state.themeKey === "dishes";
+  const buttonLabel = extremeMode ? "PLAY JAMAICAN LUDI" : "PLAY EXTREME LUDI";
+  const icon = extremeMode ? "♥" : "⚡";
+  button.innerHTML = `<span class="theme-switch-icon" aria-hidden="true">${icon}</span><span>${buttonLabel}</span>`;
   document.getElementById("gameModeTitle").textContent = THEMES[state.themeKey].title;
   document.title = THEMES[state.themeKey].title;
-  document.getElementById("extremeRulesItem").hidden = state.themeKey !== "dishes";
-  document.getElementById("extremeActionKey").hidden = state.themeKey !== "dishes";
-  const switchTarget = state.themeKey === "family"
-    ? THEMES.dishes.title
-    : THEMES.family.title;
-  button.title = `Switch to ${switchTarget}`;
+  document.getElementById("rulesTitle").textContent = extremeMode
+    ? "How To Play Extreme Jamaican Ludi"
+    : "How To Play Jamaican Ludi";
+  document.getElementById("classicRulesList").hidden = extremeMode;
+  document.getElementById("extremeRulesList").hidden = !extremeMode;
+  document.getElementById("extremeActionKey").hidden = !extremeMode;
+  button.title = buttonLabel;
   button.setAttribute("aria-label", button.title);
 }
 
 document.getElementById("themeToggleBtn").addEventListener("click", () => {
   state.themeKey = state.themeKey === "family" ? "dishes" : "family";
-  localStorage.setItem("jl_theme", state.themeKey);
   updateThemeButton();
   updateRegionLabels();
   renderExperiences();
