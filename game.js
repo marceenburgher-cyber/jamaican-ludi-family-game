@@ -351,7 +351,7 @@ async function animateApplyMove(color, pieceIdx, dieSlot) {
   }
 
   state.diceUsed[dieSlot] = true;
-  state.armedDie = null;
+  const noMoreLegal = !bothUsed && nextUsableDie == null;
   state.animating = false;
 
   checkGameOver();
@@ -625,7 +625,14 @@ function renderChatter() {
     item.className = `chatter-line${index === 0 ? " new" : ""}`;
     item.textContent = line;
     el.appendChild(item);
-  });
+  });// A six brings a piece out, but it does not spend the other die. Arm the
+  // next usable die automatically so a 6 + 2 can birth a piece and then move
+  // it (or another eligible piece) two spaces without appearing to end early.
+  const remainingLegal = legalDiceForColor(color);
+  const nextUsableDie = [0, 1].find(
+    (slot) => !state.diceUsed[slot] && remainingLegal[slot].length > 0,
+  );
+  state.armedDie = nextUsableDie ?? null;
 }
 
 // ============================================================
