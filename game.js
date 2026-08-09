@@ -33,13 +33,16 @@ const EXPERIENCES = [
   { key: "kingston", name: "Kingston Dancehall Night", cost: 3300, image: "worlds/kingston-dancehall-night.png", description: "Dress up, step out and enjoy a grown-up Kingston dancehall celebration." },
 ];
 
+// Unadvertised owner review mode. It unlocks scene viewing only and never
+// changes the points or selected experience saved by the public game.
+const scenePreviewMode = new URLSearchParams(window.location.search).get("preview") === "scenes";
 let experiencePoints = Math.max(0, Number.parseInt(localStorage.getItem("jl_experiencePoints") || "0", 10) || 0);
 let selectedExperienceKey = localStorage.getItem("jl_selectedExperience") || "coolout";
 let pointsToastTimer = null;
 
 function selectedExperience() {
   const requested = EXPERIENCES.find((experience) => experience.key === selectedExperienceKey);
-  if (requested && experiencePoints >= requested.cost) return requested;
+  if (requested && (scenePreviewMode || experiencePoints >= requested.cost)) return requested;
   selectedExperienceKey = "coolout";
   return EXPERIENCES[0];
 }
@@ -54,6 +57,7 @@ function showPointsToast(message) {
 }
 
 function awardExperiencePoints(color, amount, reason) {
+  if (scenePreviewMode) return;
   if (state.controllers[color] !== "human" || amount <= 0) return;
   const previousPoints = experiencePoints;
   experiencePoints += amount;
@@ -72,21 +76,25 @@ function renderExperiences() {
   document.body.style.setProperty("--world-image", `url("${active.image}")`);
   document.body.classList.add("world-active");
 
-  document.getElementById("experiencePoints").textContent = experiencePoints.toLocaleString();
-  document.getElementById("headerPoints").textContent = `${experiencePoints.toLocaleString()} PTS`;
+  const passportLabel = document.querySelector(".points-passport span");
+  passportLabel.textContent = scenePreviewMode ? "OWNER PREVIEW" : "Family Points";
+  document.getElementById("experiencePoints").textContent = scenePreviewMode ? "ALL SCENES" : experiencePoints.toLocaleString();
+  document.getElementById("headerPoints").textContent = scenePreviewMode ? "PREVIEW" : `${experiencePoints.toLocaleString()} PTS`;
   document.getElementById("experienceHeroImage").src = active.image;
   document.getElementById("experienceHeroImage").alt = active.name;
   document.getElementById("experienceHeroTitle").textContent = active.name;
   document.getElementById("experienceHeroDescription").textContent = active.description;
 
   const next = EXPERIENCES.find((experience) => experience.cost > experiencePoints);
-  document.getElementById("nextExperienceText").textContent = next
-    ? `${next.cost - experiencePoints} points to ${next.name}`
-    : "Every Jamaican experience unlocked";
+  document.getElementById("nextExperienceText").textContent = scenePreviewMode
+    ? "Scene review only - game points remain unchanged"
+    : next
+      ? `${next.cost - experiencePoints} points to ${next.name}`
+      : "Every Jamaican experience unlocked";
 
   grid.replaceChildren();
   EXPERIENCES.forEach((experience) => {
-    const unlocked = experiencePoints >= experience.cost;
+    const unlocked = scenePreviewMode || experiencePoints >= experience.cost;
     const selected = experience.key === active.key;
     const card = document.createElement("button");
     card.type = "button";
@@ -99,7 +107,7 @@ function renderExperiences() {
       <span class="experience-card-shade" aria-hidden="true"></span>
       <span class="experience-card-copy">
         <strong>${experience.name}</strong>
-        <small>${selected ? "NOW VISITING" : unlocked ? "UNLOCKED · TAP TO VISIT" : `🔒 ${experience.cost.toLocaleString()} POINTS`}</small>
+        <small>${selected ? (scenePreviewMode ? "PREVIEWING" : "NOW VISITING") : unlocked ? (scenePreviewMode ? "TAP TO PREVIEW" : "UNLOCKED · TAP TO VISIT") : `🔒 ${experience.cost.toLocaleString()} POINTS`}</small>
       </span>`;
     card.addEventListener("click", () => {
       if (!unlocked) {
@@ -107,7 +115,7 @@ function renderExperiences() {
         return;
       }
       selectedExperienceKey = experience.key;
-      localStorage.setItem("jl_selectedExperience", selectedExperienceKey);
+      if (!scenePreviewMode) localStorage.setItem("jl_selectedExperience", selectedExperienceKey);
       renderExperiences();
       document.getElementById("experienceFeature").scrollIntoView({ behavior: "smooth", block: "center" });
     });
