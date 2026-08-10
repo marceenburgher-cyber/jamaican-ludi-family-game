@@ -101,9 +101,11 @@ function renderExperiences() {
   if (!grid) return;
   const experiencesButton = document.getElementById("experiencesBtn");
   const experiencesSection = document.getElementById("experiences");
+  const classicTeaser = document.getElementById("classicExperienceTeaser");
   const extremeMode = state.themeKey === "dishes";
   experiencesButton.hidden = !extremeMode;
   experiencesSection.hidden = !extremeMode;
+  classicTeaser.hidden = extremeMode;
   document.body.classList.toggle("world-active", extremeMode);
   if (!extremeMode) {
     document.body.style.removeProperty("--world-image");
@@ -1430,7 +1432,9 @@ function updateThemeButton() {
   const extremeMode = state.themeKey === "dishes";
   const buttonLabel = extremeMode
     ? "PLAY JAMAICAN LUDI"
-    : `PLAY EXTREME LUDI · ${extremeTokens} TOKEN${extremeTokens === 1 ? "" : "S"}`;
+    : extremeTokens > 0
+      ? `PLAY EXTREME LUDI · ${extremeTokens} TOKEN${extremeTokens === 1 ? "" : "S"} READY`
+      : `PLAY EXTREME LUDI · EARN ${EXTREME_TOKEN_POINTS - experiencePoints} POINTS`;
   const icon = extremeMode ? "♥" : "⚡";
   button.innerHTML = `<span class="theme-switch-icon" aria-hidden="true">${icon}</span><span>${buttonLabel}</span>`;
   document.getElementById("gameModeTitle").textContent = THEMES[state.themeKey].title;

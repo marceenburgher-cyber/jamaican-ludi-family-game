@@ -1378,6 +1378,61 @@ body.world-active {
   letter-spacing:.05em;
 }
 
+.classic-experience-teaser {
+  position:relative;
+  min-height:clamp(250px,34vw,420px);
+  margin:22px 0 10px;
+  overflow:hidden;
+  border:2px solid rgba(244,191,41,.58);
+  border-radius:26px;
+  color:#fff;
+  background:#102016;
+  box-shadow:0 28px 70px rgba(0,0,0,.34);
+}
+.classic-experience-teaser > img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; }
+.classic-experience-teaser-shade {
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,rgba(2,12,7,.93) 0%,rgba(2,12,7,.72) 48%,rgba(2,12,7,.16) 100%);
+}
+.classic-experience-teaser-copy {
+  position:relative;
+  z-index:2;
+  display:flex;
+  min-height:inherit;
+  max-width:650px;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  padding:clamp(24px,5vw,56px);
+}
+.classic-experience-teaser h2 {
+  margin:5px 0 10px;
+  font-family:"Fraunces",Georgia,serif;
+  font-size:clamp(1.55rem,3.5vw,2.75rem);
+  line-height:1.04;
+  text-shadow:0 3px 14px rgba(0,0,0,.62);
+}
+.classic-experience-teaser-copy > p:not(.eyebrow) {
+  max-width:520px;
+  margin:0;
+  color:#e3ebe5;
+  font-size:clamp(.78rem,1.5vw,.96rem);
+  line-height:1.55;
+}
+.classic-experience-teaser-copy > span {
+  display:inline-flex;
+  margin-top:18px;
+  padding:8px 12px;
+  border-radius:999px;
+  color:#152014;
+  background:var(--gold);
+  font-size:.64rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
 .experiences {
   margin:22px 0 10px;
   padding:clamp(18px,3vw,34px);
@@ -1496,6 +1551,10 @@ body.world-active {
   .topbar-actions { justify-content:flex-end; flex-wrap:wrap; }
 }
 @media (max-width:720px) {
+  .classic-experience-teaser { min-height:360px; border-radius:18px; }
+  .classic-experience-teaser > img { object-position:62% center; }
+  .classic-experience-teaser-shade { background:linear-gradient(180deg,rgba(2,12,7,.08) 15%,rgba(2,12,7,.9) 72%); }
+  .classic-experience-teaser-copy { justify-content:flex-end; padding:22px 18px; }
   .experiences-heading { align-items:stretch; flex-direction:column; gap:16px; }
   .points-passport { width:100%; min-width:0; }
   .experience-grid { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; padding:0 0 8px; }
